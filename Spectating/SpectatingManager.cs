@@ -12,6 +12,7 @@ using TootTallyCore.Utils.Helpers;
 using TootTallyCore.Utils.TootTallyNotifs;
 using TootTallyLeaderboard.GameplayModifier;
 using TootTallyLeaderboard.Replays;
+using TootTallyTrombuddies;
 using UnityEngine;
 
 namespace TootTallySpectator
@@ -144,6 +145,15 @@ namespace TootTallySpectator
         }
 
         public static bool IsAnyConnectionPending() => _spectatingSystemList.Any(x => x.ConnectionPending);
+
+        public static void OnSpectateButtonPress(int id, string name)
+        {
+            if (!IsAnyConnectionPending() && !(TootTallyUser.userInfo.id == id && IsHosting))
+            {
+                CreateUniqueSpectatingConnection(id, name);
+                TrombuddiesManager.UpdateUsers();
+            }
+        }
 
         public enum DataType
         {

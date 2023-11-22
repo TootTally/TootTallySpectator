@@ -58,6 +58,7 @@ namespace TootTallySpectator
             settingPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
 
             _harmony.PatchAll(typeof(SpectatingManager.SpectatingManagerPatches));
+            _harmony.PatchAll(typeof(CompatibilityPatches));
             LogInfo($"Module loaded!");
         }
 
