@@ -10,7 +10,7 @@ using TootTallyAccounts;
 using TootTallyCore.APIServices;
 using TootTallyCore.Utils.Helpers;
 using TootTallyCore.Utils.TootTallyNotifs;
-using TootTallyLeaderboard.GameplayModifier;
+using TootTallyGameModifiers;
 using TootTallyLeaderboard.Replays;
 using TootTallyTrombuddies;
 using UnityEngine;

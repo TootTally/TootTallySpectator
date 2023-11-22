@@ -45,6 +45,9 @@
 		<Reference Include="TootTallyWebsocketLibs">
 			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-WebsocketLibs\TootTallyWebsocketLibs.dll</HintPath>
 		</Reference>
+		<Reference Include="TootTallyGameModifiers">
+			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-GameModifiers\TootTallyGameModifiers.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
