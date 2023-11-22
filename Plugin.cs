@@ -41,7 +41,7 @@ namespace TootTallySpectator
         private void TryInitialize()
         {
             // Bind to the TTModules Config for TootTally
-            ModuleConfigEnabled = TootTallyCore.Plugin.Instance.Config.Bind("Modules", "Spectator", true, "<insert module description here>");
+            ModuleConfigEnabled = TootTallyCore.Plugin.Instance.Config.Bind("Modules", "Spectator", true, "Share your gameplay and watch other plays.");
             TootTallyModuleManager.AddModule(this);
             TootTallySettings.Plugin.Instance.AddModuleToSettingPage(this);
         }
@@ -50,15 +50,14 @@ namespace TootTallySpectator
         {
             string configPath = Path.Combine(Paths.BepInExRootPath, "config/");
             ConfigFile config = new ConfigFile(configPath + CONFIG_NAME, true);
-            // Set your config here by binding them to the related ConfigEntry
-            // Example:
-            // Unlimited = config.Bind(CONFIG_FIELD, "Unlimited", DEFAULT_UNLISETTING)
+            AllowSpectate = Config.Bind("General", "Allow Spectate", true, "Allow other players to spectate you while playing.");
+            ShowSpectatorCount = Config.Bind("General", "Show Spectator Count", true, "Show the number of spectator while playing.");
 
-           
-            TootTallySettings.Plugin.MainTootTallySettingPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate, SpectatingManager.OnAllowHostConfigChange);
-            TootTallySettings.Plugin.MainTootTallySettingPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
+            settingPage = TootTallySettingsManager.AddNewPage("Spectator", "Spectator", 40f, new Color(0,0,0,0));
+            settingPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate, SpectatingManager.OnAllowHostConfigChange);
+            settingPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
 
-            _harmony.PatchAll(typeof(ModuleTemplatePatches));
+            _harmony.PatchAll(typeof(SpectatingManager.SpectatingManagerPatches));
             LogInfo($"Module loaded!");
         }
 
@@ -67,11 +66,6 @@ namespace TootTallySpectator
             _harmony.UnpatchSelf();
             settingPage.Remove();
             LogInfo($"Module unloaded!");
-        }
-
-        public static class ModuleTemplatePatches
-        {
-            // Apply your Trombone Champ patches here
         }
 
         public ConfigEntry<bool> AllowSpectate { get; private set; }
