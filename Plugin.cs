@@ -3,6 +3,7 @@ using BepInEx;
 using BepInEx.Configuration;
 using HarmonyLib;
 using System.IO;
+using TootTallyCore.Utils.Assets;
 using TootTallyCore.Utils.TootTallyModules;
 using TootTallySettings;
 using UnityEngine;
@@ -48,6 +49,7 @@ namespace TootTallySpectator
 
         public void LoadModule()
         {
+            AssetManager.LoadAssets(Path.Combine(Path.GetDirectoryName(Instance.Info.Location), "Assets"));
             string configPath = Path.Combine(Paths.BepInExRootPath, "config/");
             ConfigFile config = new ConfigFile(configPath + CONFIG_NAME, true);
             AllowSpectate = Config.Bind("General", "Allow Spectate", true, "Allow other players to spectate you while playing.");
@@ -57,6 +59,7 @@ namespace TootTallySpectator
             settingPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate, SpectatingManager.OnAllowHostConfigChange);
             settingPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
 
+            gameObject.AddComponent<SpectatingManager>();
             _harmony.PatchAll(typeof(SpectatingManager.SpectatingManagerPatches));
             _harmony.PatchAll(typeof(CompatibilityPatches));
             LogInfo($"Module loaded!");
@@ -64,6 +67,7 @@ namespace TootTallySpectator
 
         public void UnloadModule()
         {
+            DestroyImmediate(gameObject.GetComponent<SpectatingManager>());
             _harmony.UnpatchSelf();
             settingPage.Remove();
             LogInfo($"Module unloaded!");

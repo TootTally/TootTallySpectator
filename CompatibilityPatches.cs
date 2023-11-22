@@ -25,11 +25,10 @@ namespace TootTallySpectator
         {
             var rightContent = __result.transform.Find("LatencyFG/RightContent").gameObject;
             if (!SpectatingManager.IsHosting)
-            {
                 if (user.id == TootTallyUser.userInfo.id)
                     GameObjectFactory.CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "H", "SpectateUserButton", delegate { SpectatingManager.OnSpectateButtonPress(user.id, user.username); });
-            }
-            else if (user.id != TootTallyUser.userInfo.id && SpectatingManager.currentSpectatorIDList.Contains(user.id))
+
+            if (user.id != TootTallyUser.userInfo.id && SpectatingManager.currentSpectatorIDList.Contains(user.id))
                 GameObjectFactory.CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { SpectatingManager.OnSpectateButtonPress(user.id, user.username); });
         }
 
@@ -90,7 +89,7 @@ namespace TootTallySpectator
         [HarmonyPrefix]
         public static bool AvoidAchievementCheck() => !SpectatingManager.IsSpectating; // Don't check for achievements if we just did a replay
 
-        [HarmonyPatch(typeof(TrombuddiesManager), nameof(TrombuddiesManager.UpdateUsers))]
+        [HarmonyPatch(typeof(UserStatusManager), nameof(UserStatusManager.OnHeartBeatRequestResponse))]
         [HarmonyPostfix]
         public static void UpdateSpecList() => SpectatingManager.UpdateSpectatorIDList();
     }
