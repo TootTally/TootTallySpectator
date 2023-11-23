@@ -64,7 +64,8 @@ namespace TootTallySpectator
         [HarmonyPrefix]
         public static void SetReplayFileNameToSpectator()
         {
-            ReplaySystemManager.SetSpectatingMode();
+            if (SpectatingManager.IsSpectating)
+                ReplaySystemManager.SetSpectatingMode();
         }
 
         [HarmonyPatch(typeof(ReplaySystemManager), nameof(ReplaySystemManager.OnGameControllerPlaySongSetReplayStartTime))]
