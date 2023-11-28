@@ -41,7 +41,7 @@ namespace TootTallySpectator
             _receivedSpecInfoQueue = new ConcurrentQueue<SocketSpectatorInfo>();
 
             ConnectionPending = true;
-            ConnectToWebSocketServer(_url + id, id == TootTallyUser.userInfo.id);
+            ConnectToWebSocketServer(_url + id, TootTallyAccounts.Plugin.GetAPIKey,  id == TootTallyUser.userInfo.id);
         }
 
         public void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed, string gamemodifiers)
