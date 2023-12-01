@@ -3,6 +3,7 @@ using System.Linq;
 using TootTallyAccounts;
 using TootTallyCore.APIServices;
 using TootTallyCore.Graphics;
+using TootTallyCore.Utils.Assets;
 using TootTallyGameModifiers;
 using TootTallyLeaderboard.Replays;
 using TootTallyTrombuddies;
@@ -20,10 +21,10 @@ namespace TootTallySpectator
             var rightContent = __result.transform.Find("LatencyFG/RightContent").gameObject;
             if (!SpectatingManager.IsHosting)
                 if (user.id == TootTallyUser.userInfo.id)
-                    GameObjectFactory.CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "H", "SpectateUserButton", delegate { SpectatingManager.OnSpectateButtonPress(user.id, user.username); });
+                    GameObjectFactory.CreateCustomButton(rightContent.transform, Vector2.zero, Vector2.one * 45, AssetManager.GetSprite("SpectatorIcon.png"), "SpectateUserButton", delegate { SpectatingManager.OnSpectateButtonPress(user.id, user.username); });
 
             if (user.id != TootTallyUser.userInfo.id && SpectatingManager.currentSpectatorIDList.Contains(user.id))
-                GameObjectFactory.CreateCustomButton(rightContent.transform, Vector2.zero, new Vector2(30, 30), "S", "SpectateUserButton", delegate { SpectatingManager.OnSpectateButtonPress(user.id, user.username); });
+                GameObjectFactory.CreateCustomButton(rightContent.transform, Vector2.zero, Vector2.one * 45, AssetManager.GetSprite("SpectatorIcon.png"), "SpectateUserButton", delegate { SpectatingManager.OnSpectateButtonPress(user.id, user.username); });
         }
 
         [HarmonyPatch(typeof(GameModifiers.InstaFails), nameof(GameModifiers.InstaFails.SpecialUpdate))]

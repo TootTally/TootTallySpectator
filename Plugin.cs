@@ -60,6 +60,8 @@ namespace TootTallySpectator
             settingPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate, SpectatingManager.OnAllowHostConfigChange);
             settingPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
 
+            TootTallySettings.Plugin.TryAddThunderstoreIconToPageButton(Instance.Info.Location, Name, settingPage);
+
             gameObject.AddComponent<SpectatingManager>();
             _harmony.PatchAll(typeof(SpectatingManager.SpectatingManagerPatches));
             _harmony.PatchAll(typeof(CompatibilityPatches));
