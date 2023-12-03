@@ -801,7 +801,7 @@ namespace TootTallySpectator
                     {
                         _specTracktime += Time.deltaTime * ReplaySystemManager.gameSpeedMultiplier;
 
-                        if (Math.Abs(__instance.musictrack.time - _specTracktime) > .5)
+                        if (Math.Abs(__instance.musictrack.time - _specTracktime) > .05)
                         {
                             Plugin.LogInfo("Resynced track time...");
                             _specTracktime = __instance.musictrack.time;
