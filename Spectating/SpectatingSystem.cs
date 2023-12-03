@@ -81,7 +81,7 @@ namespace TootTallySpectator
         }
 
         private SocketFrameData _socketFrameDataHolder = new SocketFrameData();
-        public void SendFrameData(double time, double noteHolder, float pointerPosition)
+        public void SendFrameData(float time, float noteHolder, float pointerPosition)
         {
             _socketFrameDataHolder.dataType = DataType.FrameData.ToString();
             _socketFrameDataHolder.time = time;
@@ -92,7 +92,7 @@ namespace TootTallySpectator
         }
 
         private SocketTootData _socketTootDataHolder = new SocketTootData();
-        public void SendTootData(double time, double noteHolder, bool isTooting)
+        public void SendTootData(float time, float noteHolder, bool isTooting)
         {
             _socketTootDataHolder.dataType = DataType.TootData.ToString();
             _socketTootDataHolder.time = time;

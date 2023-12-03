@@ -196,15 +196,15 @@ namespace TootTallySpectator
 
         public class SocketFrameData : SocketMessage
         {
-            public double time { get; set; }
-            public double noteHolder { get; set; }
+            public float time { get; set; }
+            public float noteHolder { get; set; }
             public float pointerPosition { get; set; }
         }
 
         public class SocketTootData : SocketMessage
         {
-            public double time { get; set; }
-            public double noteHolder { get; set; }
+            public float time { get; set; }
+            public float noteHolder { get; set; }
             public bool isTooting { get; set; }
         }
 
@@ -399,7 +399,7 @@ namespace TootTallySpectator
                     if (_frameData != null && _frameData.Count > 0 && _frameData[_frameIndex].time - __instance.musictrack.time >= SYNC_BUFFER)
                     {
                         Plugin.LogInfo("Syncing track with replay data...");
-                        __instance.musictrack.time = (float)_frameData[_frameIndex].time;
+                        _specTracktime = __instance.musictrack.time = (float)_frameData[_frameIndex].time;
                         __instance.noteholderr.anchoredPosition = new Vector2((float)_frameData[_frameIndex].noteHolder, __instance.noteholderr.anchoredPosition.y);
                     }
                 }
@@ -443,44 +443,49 @@ namespace TootTallySpectator
                         RetryFromPointScene();
             }
 
-            public static void PlaybackSpectatingData(GameController __instance)
+            private static float _specTracktime;
+
+            public static void PlaybackSpectatingData(GameController __instance, float time)
             {
                 Cursor.visible = true;
                 if (_frameData == null || _tootData == null) return;
 
                 if (!__instance.controllermode) __instance.controllermode = true; //Still required to not make the mouse position update
 
-                var currentMapPosition = __instance.noteholderr.anchoredPosition.x;
-
-
-
                 if (_frameData.Count > 0)
-                    PlaybackFrameData(currentMapPosition, __instance);
+                    PlaybackFrameData(time, __instance);
 
                 if (_tootData.Count > 0)
-                    PlaybackTootData(currentMapPosition);
+                    PlaybackTootData(time);
 
                 if (_frameData.Count > _frameIndex && _lastFrame != null && _currentFrame != null)
-                    InterpolateCursorPosition(currentMapPosition, __instance);
+                    InterpolateCursorPosition(time, __instance);
 
 
             }
 
-            private static void InterpolateCursorPosition(float currentMapPosition, GameController __instance)
+            private static void InterpolateCursorPosition(float trackTime, GameController __instance)
             {
-                var newCursorPosition = EasingHelper.Lerp(_lastFrame.pointerPosition, _currentFrame.pointerPosition, (float)((_lastFrame.noteHolder - currentMapPosition) / (_lastFrame.noteHolder - _currentFrame.noteHolder)));
-                SetCursorPosition(__instance, newCursorPosition);
-                __instance.puppet_humanc.doPuppetControl(-newCursorPosition / 225); //225 is half of the Gameplay area:450
+                if (_currentFrame.time - _lastFrame.time > 0)
+                {
+                    var by = (trackTime - _lastFrame.time) / (_currentFrame.time - _lastFrame.time);
+                    var newCursorPosition = Mathf.Clamp(EasingHelper.Lerp(_lastFrame.pointerPosition, _currentFrame.pointerPosition, by), -300, 300); //Safe clamping just in case
+                    SetCursorPosition(__instance, newCursorPosition);
+                    __instance.puppet_humanc.doPuppetControl(-newCursorPosition / 225); //225 is half of the Gameplay area:450
+                }
+                else
+                    SetCursorPosition(__instance, _currentFrame.pointerPosition);
+                
             }
 
-            private static void PlaybackFrameData(float currentMapPosition, GameController __instance)
+            private static void PlaybackFrameData(float trackTime, GameController __instance)
             {
-                if (_lastFrame != _currentFrame && currentMapPosition <= _currentFrame.noteHolder)
+                if (_lastFrame != _currentFrame && trackTime >= _currentFrame.time)
                     _lastFrame = _currentFrame;
 
-                if (_frameData.Count > _frameIndex && (_currentFrame == null || currentMapPosition <= _currentFrame.noteHolder))
+                if (_frameData.Count > _frameIndex && (_currentFrame == null || trackTime >= _currentFrame.time))
                 {
-                    _frameIndex = _frameData.FindIndex(_frameIndex > 1 ? _frameIndex - 1 : 0, x => currentMapPosition > x.noteHolder);
+                    _frameIndex = _frameData.FindIndex(_frameIndex > 1 ? _frameIndex - 1 : 0, x => trackTime < x.time);
                     if (_frameData.Count > _frameIndex && _frameIndex != -1)
                         _currentFrame = _frameData[_frameIndex];
                 }
@@ -513,12 +518,12 @@ namespace TootTallySpectator
                 SpectatingOverlay.UpdateViewerList(specData);
             }
 
-            public static void PlaybackTootData(float currentMapPosition)
+            public static void PlaybackTootData(float trackTime)
             {
-                if (currentMapPosition <= _currentTootData.noteHolder && _isTooting != _currentTootData.isTooting)
+                if (trackTime >= _currentTootData.time && _isTooting != _currentTootData.isTooting)
                     _isTooting = _currentTootData.isTooting;
 
-                if (_tootData.Count > _tootIndex && currentMapPosition <= _currentTootData.noteHolder) //smaller or equal to because noteholder goes toward negative
+                if (_tootData.Count > _tootIndex && trackTime >= _currentTootData.time) //smaller or equal to because noteholder goes toward negative
                     _currentTootData = _tootData[_tootIndex++];
             }
 
@@ -793,7 +798,17 @@ namespace TootTallySpectator
                     if (!__instance.quitting && !__instance.retrying && (_currentSpecState == UserState.SelectingSong || _lastSongInfo == null || _currentSongInfo == null || _lastSongInfo.trackRef != _currentSongInfo.trackRef))
                         QuitSong();
                     if (!_waitingToSync && !__instance.paused && !__instance.quitting && !__instance.retrying)
-                        PlaybackSpectatingData(__instance);
+                    {
+                        _specTracktime += Time.deltaTime * ReplaySystemManager.gameSpeedMultiplier;
+
+                        if (Math.Abs(__instance.musictrack.time - _specTracktime) > .5)
+                        {
+                            Plugin.LogInfo("Resynced track time...");
+                            _specTracktime = __instance.musictrack.time;
+                        }
+
+                        PlaybackSpectatingData(__instance, _specTracktime);
+                    }
                     else if (_waitingToSync && __instance.curtainc.doneanimating && !ShouldWaitForSync(out _waitingToSync))
                     {
                         TootTallyNotifManager.DisplayNotif("Finished syncing with host.");
@@ -806,7 +821,7 @@ namespace TootTallySpectator
                     if (_elapsedTime >= 1f / _targetFramerate)
                     {
                         _elapsedTime = 0f;
-                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time + (__instance.latency_offset / 1000f), __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
+                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
                     }
                 }
                 else if (IsHosting && __instance.restarttimer > .4f && !_isQuickRestarting)
