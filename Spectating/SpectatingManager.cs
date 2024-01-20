@@ -414,7 +414,7 @@ namespace TootTallySpectator
                 if (IsSpectating)
                     __result = _isTooting;
                 else if (IsHosting && _lastIsTooting != __result && !__instance.paused && !__instance.retrying && !__instance.quitting)
-                    hostedSpectatingSystem.SendTootData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __result);
+                    hostedSpectatingSystem.SendTootData(__instance.musictrack.time - (GlobalVariables.localsettings.latencyadjust/1000f), __instance.noteholderr.anchoredPosition.x, __result);
                 _lastIsTooting = __result;
             }
 
@@ -801,7 +801,7 @@ namespace TootTallySpectator
                     {
                         _specTracktime += Time.deltaTime * ReplaySystemManager.gameSpeedMultiplier;
 
-                        if (Math.Abs(__instance.musictrack.time - _specTracktime) > .05)
+                        if (Math.Abs(__instance.musictrack.time - _specTracktime) > .08f)
                         {
                             Plugin.LogInfo("Resynced track time...");
                             _specTracktime = __instance.musictrack.time;
@@ -821,7 +821,7 @@ namespace TootTallySpectator
                     if (_elapsedTime >= 1f / _targetFramerate)
                     {
                         _elapsedTime = 0f;
-                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time, __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
+                        hostedSpectatingSystem.SendFrameData(__instance.musictrack.time - (GlobalVariables.localsettings.latencyadjust / 1000f), __instance.noteholderr.anchoredPosition.x, __instance.pointer.transform.localPosition.y);
                     }
                 }
                 else if (IsHosting && __instance.restarttimer > .4f && !_isQuickRestarting)
