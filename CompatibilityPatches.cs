@@ -5,7 +5,6 @@ using TootTallyCore.APIServices;
 using TootTallyCore.Graphics;
 using TootTallyCore.Utils.Assets;
 using TootTallyGameModifiers;
-using TootTallyLeaderboard.Replays;
 using TootTallyTrombuddies;
 using UnityEngine;
 
@@ -27,10 +26,6 @@ namespace TootTallySpectator
                 GameObjectFactory.CreateCustomButton(rightContent.transform, Vector2.zero, Vector2.one * 45, AssetManager.GetSprite("SpectatorIcon.png"), "SpectateUserButton", delegate { SpectatingManager.OnSpectateButtonPress(user.id, user.username); });
         }
 
-        [HarmonyPatch(typeof(GameModifiers.InstaFails), nameof(GameModifiers.InstaFails.SpecialUpdate))]
-        [HarmonyPrefix]
-        public static bool OverwriteInstaFail() => !SpectatingManager.IsSpectating;
-
         [HarmonyPatch(typeof(UserStatusUpdater), nameof(UserStatusUpdater.SetPlayingUserStatus))]
         [HarmonyPrefix]
         public static bool OverwritePlayingUserStatus()
@@ -49,33 +44,6 @@ namespace TootTallySpectator
             if (SpectatingManager.IsSpectating)
                 GameModifierManager.LoadBackedupModifiers();
         }
-
-        [HarmonyPatch(typeof(ReplaySystemManager), nameof(ReplaySystemManager.ShouldSubmitReplay))]
-        [HarmonyPostfix]
-        public static void PreventScoreSubmitOnSpectating(ref bool __result)
-        {
-            if (SpectatingManager.IsSpectating)
-            {
-                Plugin.LogInfo("Spectating someone, skipping replay submission.");
-                __result = false;
-            }
-        }
-
-        [HarmonyPatch(typeof(ReplaySystemManager), nameof(ReplaySystemManager.GameControllerPrefixPatch))]
-        [HarmonyPrefix]
-        public static void SetReplayFileNameToSpectator()
-        {
-            if (SpectatingManager.IsSpectating)
-                ReplaySystemManager.SetSpectatingMode();
-        }
-
-        [HarmonyPatch(typeof(ReplaySystemManager), nameof(ReplaySystemManager.OnGameControllerPlaySongSetReplayStartTime))]
-        [HarmonyPrefix]
-        public static bool DontSetReplayStartTimeOnSpec() => !SpectatingManager.IsSpectating;
-
-        [HarmonyPatch(typeof(ReplaySystemManager), nameof(ReplaySystemManager.GameControllerResumeTrackPostfixPatch))]
-        [HarmonyPrefix]
-        public static bool OverwriteSetReplayManagerStateOnResume() => !SpectatingManager.IsSpectating;
 
         [HarmonyPatch(typeof(PointSceneController), nameof(PointSceneController.updateSave))]
         [HarmonyPrefix]

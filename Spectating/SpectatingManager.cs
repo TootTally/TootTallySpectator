@@ -9,9 +9,9 @@ using System.Linq;
 using TootTallyAccounts;
 using TootTallyCore.APIServices;
 using TootTallyCore.Utils.Helpers;
+using TootTallyCore.Utils.TootTallyGlobals;
 using TootTallyCore.Utils.TootTallyNotifs;
 using TootTallyGameModifiers;
-using TootTallyLeaderboard.Replays;
 using TootTallyTrombuddies;
 using UnityEngine;
 
@@ -59,6 +59,7 @@ namespace TootTallySpectator
                 if (hostedSpectatingSystem != null && hostedSpectatingSystem.IsConnected)
                     hostedSpectatingSystem = null;
             }
+            TootTallyGlobalVariables.isSpectating = IsSpectating;
         }
 
         public static void CancelPendingConnections()
@@ -104,6 +105,7 @@ namespace TootTallySpectator
                 SpectatingManagerPatches.SendCurrentUserState();
             }
             sender.OnSocketSpecInfoReceived = SpectatingManagerPatches.OnSpectatorDataReceived;
+            TootTallyGlobalVariables.isSpectating = IsSpectating;
         }
 
         public static void RemoveSpectator(SpectatingSystem spectator)
@@ -306,7 +308,6 @@ namespace TootTallySpectator
 
             [HarmonyPatch(typeof(HomeController), nameof(HomeController.Start))]
             [HarmonyPostfix]
-
             public static void InitOverlay() { SpectatingOverlay.Initialize(); }
 
             [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.Start))]
@@ -601,7 +602,7 @@ namespace TootTallySpectator
             private static void RetryFromPointScene()
             {
                 ClearSpectatingData();
-                ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
+                TootTallyGlobalVariables.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
                 GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
                 Plugin.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
                 _pointSceneControllerInstance.clickRetry();
@@ -627,8 +628,7 @@ namespace TootTallySpectator
                             _currentSongInfo = _lastSongInfo;
                             _spectatingStarting = true;
                             ClearSpectatingData();
-                            ReplaySystemManager.SetSpectatingMode();
-                            ReplaySystemManager.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
+                            TootTallyGlobalVariables.gameSpeedMultiplier = _lastSongInfo.gameSpeed;
                             GlobalVariables.gamescrollspeed = _lastSongInfo.scrollSpeed;
                             Plugin.LogInfo("ScrollSpeed Set: " + _lastSongInfo.scrollSpeed);
                             GameModifierManager.LoadModifiersFromString(_lastSongInfo.gamemodifiers);
@@ -799,7 +799,7 @@ namespace TootTallySpectator
                         QuitSong();
                     if (!_waitingToSync && !__instance.paused && !__instance.quitting && !__instance.retrying)
                     {
-                        _specTracktime += Time.deltaTime * ReplaySystemManager.gameSpeedMultiplier;
+                        _specTracktime += Time.deltaTime * TootTallyGlobalVariables.gameSpeedMultiplier;
 
                         if (Math.Abs(__instance.musictrack.time - _specTracktime) > .08f)
                         {
@@ -851,7 +851,7 @@ namespace TootTallySpectator
                 {
                     trackRef = __instance.alltrackslist[__instance.songindex].trackref,
                     songID = 0,
-                    gameSpeed = ReplaySystemManager.gameSpeedMultiplier,
+                    gameSpeed = TootTallyGlobalVariables.gameSpeedMultiplier,
                     scrollSpeed = GlobalVariables.gamescrollspeed,
                     gamemodifiers = GameModifierManager.GetModifiersString()
                 };

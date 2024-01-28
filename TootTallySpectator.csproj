@@ -4,7 +4,7 @@
 		<TargetFramework>net472</TargetFramework>
 		<AssemblyName>TootTallySpectator</AssemblyName>
 		<Description>Share your gameplay and watch your trombuddies play</Description>
-		<Version>1.0.5</Version>
+		<Version>1.0.6</Version>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<LangVersion>latest</LangVersion>
 		<TromboneChampDir>E:\SteamLibrary\steamapps\common\TromboneChamp</TromboneChampDir>
@@ -38,9 +38,6 @@
 		</Reference>
 		<Reference Include="TootTallyTrombuddies">
 			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTallyTrombuddies\TootTallyTrombuddies.dll</HintPath>
-		</Reference>
-		<Reference Include="TootTallyLeaderboard">
-			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTallyLeaderboard\TootTallyLeaderboard.dll</HintPath>
 		</Reference>
 		<Reference Include="TootTallyWebsocketLibs">
 			<HintPath>$(TromboneTootDir)\BepInEx\plugins\TootTally-TootTallyWebsocketLibs\TootTallyWebsocketLibs.dll</HintPath>

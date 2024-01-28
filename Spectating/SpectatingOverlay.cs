@@ -101,9 +101,9 @@ namespace TootTallySpectator
 
         public static void UpdateViewIcon()
         {
-            if (!Plugin.Instance.ShowSpectatorCount.Value || _viewerIcon == null || !_isInitialized) return;
+            if (_viewerIcon == null || !_isInitialized) return;
 
-            if (_spectatorInfo == null || _spectatorInfo.count < 1)
+            if (_spectatorInfo == null || _spectatorInfo.count < 1 || !Plugin.Instance.ShowSpectatorCount.Value)
                 _viewerIcon.Hide();
             else if (IsInLevelSelect)
             {
