@@ -103,7 +103,7 @@ namespace TootTallySpectator
         {
             if (_viewerIcon == null || !_isInitialized) return;
 
-            if (_spectatorInfo == null || _spectatorInfo.count < 1 || !Plugin.Instance.ShowSpectatorCount.Value)
+            if (_spectatorInfo.count == 0 || _spectatorInfo.count < 1 || !Plugin.Instance.ShowSpectatorCount.Value)
                 _viewerIcon.Hide();
             else if (IsInLevelSelect)
             {

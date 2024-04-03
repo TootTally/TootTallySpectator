@@ -46,7 +46,7 @@ namespace TootTallySpectator
 
         public void UpdateViewerList(SocketSpectatorInfo specInfo)
         {
-            if (specInfo == null)
+            if (specInfo.count == 0)
             {
                 _lastCount = 0;
                 return;

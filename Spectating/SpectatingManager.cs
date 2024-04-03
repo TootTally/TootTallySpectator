@@ -14,6 +14,7 @@ using TootTallyCore.Utils.TootTallyNotifs;
 using TootTallyGameModifiers;
 using TootTallyTrombuddies;
 using UnityEngine;
+using UnityEngine.Playables;
 
 namespace TootTallySpectator
 {
@@ -25,6 +26,8 @@ namespace TootTallySpectator
         public static int[] currentSpectatorIDList;
         public static bool IsHosting => hostedSpectatingSystem != null && hostedSpectatingSystem.IsConnected && hostedSpectatingSystem.IsHost;
         public static bool IsSpectating => _spectatingSystemList != null && !IsHosting && _spectatingSystemList.Any(x => x.IsConnected);
+
+        public static SocketSpectatorInfo nullSpecInfo = new SocketSpectatorInfo() { count = 0 };
 
         public void Awake()
         {
@@ -40,7 +43,7 @@ namespace TootTallySpectator
 
             if (Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Escape) && _spectatingSystemList.Count > 0 && !IsHosting)
             {
-                SpectatingOverlay.UpdateViewerList(null);
+                SpectatingOverlay.UpdateViewerList(nullSpecInfo);
                 SpectatingOverlay.HideStopSpectatingButton();
                 SpectatingOverlay.HideViewerIcon();
                 _spectatingSystemList.Last().RemoveFromManager();
@@ -52,7 +55,7 @@ namespace TootTallySpectator
         {
             if (_spectatingSystemList != null && _spectatingSystemList.Count > 0)
             {
-                SpectatingOverlay.UpdateViewerList(null);
+                SpectatingOverlay.UpdateViewerList(nullSpecInfo);
                 SpectatingOverlay.SetCurrentUserState(UserState.None);
                 for (int i = 0; i < _spectatingSystemList.Count;)
                     RemoveSpectator(_spectatingSystemList[i]);
@@ -186,40 +189,46 @@ namespace TootTallySpectator
             HomeController
         }
 
-        public class SocketMessage
+        public interface ISocketMessage
         {
-            public string dataType { get; set; }
+            public string dataType { get; }
         }
 
-        public class SocketUserState : SocketMessage
+        public struct SocketUserState : ISocketMessage
         {
+
             public int userState { get; set; }
+
+            public string dataType => DataType.UserState.ToString();
         }
 
-        public class SocketFrameData : SocketMessage
+        public struct SocketFrameData : ISocketMessage
         {
             public float time { get; set; }
             public float noteHolder { get; set; }
             public float pointerPosition { get; set; }
+            public string dataType => DataType.FrameData.ToString();
         }
 
-        public class SocketTootData : SocketMessage
+        public struct SocketTootData : ISocketMessage
         {
             public float time { get; set; }
             public float noteHolder { get; set; }
             public bool isTooting { get; set; }
+            public string dataType => DataType.TootData.ToString();
         }
 
-        public class SocketSongInfo : SocketMessage
+        public struct SocketSongInfo : ISocketMessage
         {
             public string trackRef { get; set; }
             public int songID { get; set; }
             public float gameSpeed { get; set; }
             public float scrollSpeed { get; set; }
             public string gamemodifiers { get; set; }
+            public string dataType => DataType.SongInfo.ToString();
         }
 
-        public class SocketNoteData : SocketMessage
+        public struct SocketNoteData : ISocketMessage
         {
             public int noteID { get; set; }
             public double noteScoreAverage { get; set; }
@@ -229,41 +238,34 @@ namespace TootTallySpectator
             public bool releasedButtonBetweenNotes { get; set; }
             public float health { get; set; }
             public int highestCombo { get; set; }
+            public string dataType => DataType.NoteData.ToString();
         }
 
-        public class SocketSpectatorInfo : SocketMessage
+        public struct SocketSpectatorInfo : ISocketMessage
         {
             public string hostName { get; set; }
             public int count { get; set; }
             public List<string> spectators { get; set; }
+            public string dataType => DataType.SpectatorInfo.ToString();
         }
 
         public class SocketDataConverter : JsonConverter
         {
-            public override bool CanConvert(Type objectType) => objectType == typeof(SocketMessage);
+            public override bool CanConvert(Type objectType) => objectType == typeof(ISocketMessage);
 
             public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
             {
                 JObject jo = JObject.Load(reader);
-                if (jo["dataType"].Value<string>() == DataType.UserState.ToString())
-                    return jo.ToObject<SocketUserState>(serializer);
-
-                if (jo["dataType"].Value<string>() == DataType.FrameData.ToString())
-                    return jo.ToObject<SocketFrameData>(serializer);
-
-                if (jo["dataType"].Value<string>() == DataType.TootData.ToString())
-                    return jo.ToObject<SocketTootData>(serializer);
-
-                if (jo["dataType"].Value<string>() == DataType.SongInfo.ToString())
-                    return jo.ToObject<SocketSongInfo>(serializer);
-
-                if (jo["dataType"].Value<string>() == DataType.NoteData.ToString())
-                    return jo.ToObject<SocketNoteData>(serializer);
-
-                if (jo["dataType"].Value<string>() == DataType.SpectatorInfo.ToString())
-                    return jo.ToObject<SocketSpectatorInfo>(serializer);
-
-                return null;
+                return Enum.Parse(typeof(DataType), jo["dataType"].Value<string>()) switch
+                {
+                    DataType.UserState => jo.ToObject<SocketUserState>(serializer),
+                    DataType.FrameData => jo.ToObject<SocketFrameData>(serializer),
+                    DataType.TootData => jo.ToObject<SocketTootData>(serializer),
+                    DataType.SongInfo => jo.ToObject<SocketSongInfo>(serializer),
+                    DataType.NoteData => jo.ToObject<SocketNoteData>(serializer),
+                    DataType.SpectatorInfo => jo.ToObject<SocketSpectatorInfo>(serializer),
+                    _ => null
+                };
             }
 
             public override bool CanWrite
@@ -318,7 +320,7 @@ namespace TootTallySpectator
                 _pointSceneControllerInstance = null;
                 _levelSelectControllerInstance = __instance;
                 _spectatingStarting = false;
-                _lastSongInfo = null;
+                _lastSongInfo.trackRef = "";
                 _wasSpectating = false;
                 if (IsHosting)
                     SetCurrentUserState(UserState.SelectingSong);
@@ -339,7 +341,7 @@ namespace TootTallySpectator
             {
                 if (IsHosting && _currentHostState != UserState.GettingReady)
                 {
-                    if (_lastHostSongInfo != null)
+                    if (_lastHostSongInfo.trackRef != "")
                         hostedSpectatingSystem.SendSongInfoToSocket(_lastHostSongInfo);
                     SetCurrentUserState(UserState.GettingReady);
                 }
@@ -352,9 +354,10 @@ namespace TootTallySpectator
                 {
                     _frameIndex = 0;
                     _tootIndex = 0;
-                    _lastFrame = null;
-                    _currentFrame = new SocketFrameData() { time = 0, noteHolder = 0, pointerPosition = 0 };
-                    _currentTootData = new SocketTootData() { time = 0, isTooting = false, noteHolder = 0 };
+                    _lastFrame.time = 0;
+                    _currentFrame.time = _currentFrame.noteHolder = _currentFrame.pointerPosition = 0;
+                    _currentTootData.time = _currentFrame.noteHolder = 0;
+                    _currentTootData.isTooting = false;
                     _isTooting = false;
                     _elapsedTime = 0;
                     if (_lastTrackData != null)
@@ -459,7 +462,7 @@ namespace TootTallySpectator
                 if (_tootData.Count > 0)
                     PlaybackTootData(time);
 
-                if (_frameData.Count > _frameIndex && _lastFrame != null && _currentFrame != null)
+                if (_frameData.Count > _frameIndex)
                     InterpolateCursorPosition(time, __instance);
 
 
@@ -481,10 +484,10 @@ namespace TootTallySpectator
 
             private static void PlaybackFrameData(float trackTime, GameController __instance)
             {
-                if (_lastFrame != _currentFrame && trackTime >= _currentFrame.time)
+                if (_lastFrame.time != _currentFrame.time && trackTime >= _currentFrame.time)
                     _lastFrame = _currentFrame;
 
-                if (_frameData.Count > _frameIndex && (_currentFrame == null || trackTime >= _currentFrame.time))
+                if (_frameData.Count > _frameIndex && (_currentFrame.time == -1 || trackTime >= _currentFrame.time))
                 {
                     _frameIndex = _frameData.FindIndex(_frameIndex > 1 ? _frameIndex - 1 : 0, x => trackTime < x.time);
                     if (_frameData.Count > _frameIndex && _frameIndex != -1)
@@ -530,7 +533,7 @@ namespace TootTallySpectator
 
             public static void OnSongInfoReceived(SocketSongInfo info)
             {
-                if (info == null || info.trackRef == null || info.gameSpeed <= 0f)
+                if (info.trackRef == "" || info.gameSpeed <= 0f)
                 {
                     Plugin.LogInfo("SongInfo went wrong.");
                     return;
@@ -595,7 +598,7 @@ namespace TootTallySpectator
 
             private static void BackToLevelSelect()
             {
-                _lastSongInfo = null;
+                _lastSongInfo.trackRef = "";
                 _pointSceneControllerInstance.clickCont();
             }
 
@@ -621,7 +624,7 @@ namespace TootTallySpectator
             private static void TryStartSong()
             {
                 if (_currentSpecState != UserState.SelectingSong)
-                    if (_lastSongInfo != null && _lastSongInfo.trackRef != null)
+                    if (_lastSongInfo.trackRef != null)
                         if (!FSharpOption<TromboneTrack>.get_IsNone(TrackLookup.tryLookup(_lastSongInfo.trackRef)))
                         {
                             _lastTrackData = TrackLookup.lookup(_lastSongInfo.trackRef);
@@ -767,9 +770,9 @@ namespace TootTallySpectator
                 }
                 else if (IsSpectating)
                 {
-                    if (_noteData != null && _noteData.Count > 0 && _noteData.Last().noteID > __instance.currentnoteindex)
+                    if (_noteData.Count > 0 && _noteData.Last().noteID > __instance.currentnoteindex)
                         _currentNoteData = _noteData.Find(x => x.noteID == __instance.currentnoteindex);
-                    if (_currentNoteData != null)
+                    if (_currentNoteData.noteID != -1)
                     {
                         __instance.rainbowcontroller.champmode = _currentNoteData.champMode;
                         __instance.multiplier = _currentNoteData.multiplier;
@@ -780,7 +783,7 @@ namespace TootTallySpectator
                         __instance.totalscore = _currentNoteData.totalScore;
                         __instance.currenthealth = _currentNoteData.health;
                         __instance.highestcombo_level = _currentNoteData.highestCombo;
-                        _currentNoteData = null;
+                        _currentNoteData.noteID = -1;
                     }
                 }
             }
@@ -795,7 +798,7 @@ namespace TootTallySpectator
             {
                 if (IsSpectating)
                 {
-                    if (!__instance.quitting && !__instance.retrying && (_currentSpecState == UserState.SelectingSong || _lastSongInfo == null || _currentSongInfo == null || _lastSongInfo.trackRef != _currentSongInfo.trackRef))
+                    if (!__instance.quitting && !__instance.retrying && (_currentSpecState == UserState.SelectingSong || _lastSongInfo.trackRef == "" || _currentSongInfo.trackRef == "" || _lastSongInfo.trackRef != _currentSongInfo.trackRef))
                         QuitSong();
                     if (!_waitingToSync && !__instance.paused && !__instance.quitting && !__instance.retrying)
                     {

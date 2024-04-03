@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
+using System.EnterpriseServices;
 using TootTallyAccounts;
 using TootTallyCore.Utils.TootTallyNotifs;
 using TootTallyWebsocketLibs;
@@ -41,104 +42,103 @@ namespace TootTallySpectator
             _receivedSpecInfoQueue = new ConcurrentQueue<SocketSpectatorInfo>();
 
             ConnectionPending = true;
-            ConnectToWebSocketServer(_url + id, TootTallyAccounts.Plugin.GetAPIKey,  id == TootTallyUser.userInfo.id);
+            ConnectToWebSocketServer(_url + id, TootTallyAccounts.Plugin.GetAPIKey, id == TootTallyUser.userInfo.id);
         }
 
         public void SendSongInfoToSocket(string trackRef, int id, float gameSpeed, float scrollSpeed, string gamemodifiers)
         {
-            var json = JsonConvert.SerializeObject(new SocketSongInfo() { dataType = DataType.SongInfo.ToString(), trackRef = trackRef, songID = id, gameSpeed = gameSpeed, scrollSpeed = scrollSpeed, gamemodifiers = gamemodifiers });
+            var json = JsonConvert.SerializeObject(new SocketSongInfo() { trackRef = trackRef, songID = id, gameSpeed = gameSpeed, scrollSpeed = scrollSpeed, gamemodifiers = gamemodifiers });
             SendToSocket(json);
         }
 
         public void SendSongInfoToSocket(SocketSongInfo songInfo)
         {
-            songInfo.dataType = DataType.SongInfo.ToString();
             SendToSocket(JsonConvert.SerializeObject(songInfo));
         }
 
 
         public void SendUserStateToSocket(UserState userState)
         {
-            var json = JsonConvert.SerializeObject(new SocketUserState() { dataType = DataType.UserState.ToString(), userState = (int)userState });
+            var json = JsonConvert.SerializeObject(new SocketUserState() { userState = (int)userState });
             SendToSocket(json);
         }
 
-        private SocketNoteData _socketNoteDataHolder = new SocketNoteData();
         public void SendNoteData(bool champMode, int multiplier, int noteID, double noteScoreAverage, bool releasedButtonBetweenNotes, int totalScore, float health, int highestCombo)
         {
-            _socketNoteDataHolder.dataType = DataType.NoteData.ToString();
-            _socketNoteDataHolder.champMode = champMode;
-            _socketNoteDataHolder.multiplier = multiplier;
-            _socketNoteDataHolder.noteID = noteID;
-            _socketNoteDataHolder.noteScoreAverage = noteScoreAverage;
-            _socketNoteDataHolder.releasedButtonBetweenNotes = releasedButtonBetweenNotes;
-            _socketNoteDataHolder.totalScore = totalScore;
-            _socketNoteDataHolder.health = health;
-            _socketNoteDataHolder.highestCombo = highestCombo;
-
-            var json = JsonConvert.SerializeObject(_socketNoteDataHolder);
+            var socketNoteData = new SocketNoteData()
+            {
+                champMode = champMode,
+                multiplier = multiplier,
+                noteID = noteID,
+                noteScoreAverage = noteScoreAverage,
+                releasedButtonBetweenNotes = releasedButtonBetweenNotes,
+                totalScore = totalScore,
+                health = health,
+                highestCombo = highestCombo
+            };
+            var json = JsonConvert.SerializeObject(socketNoteData);
             SendToSocket(json);
         }
 
-        private SocketFrameData _socketFrameDataHolder = new SocketFrameData();
         public void SendFrameData(float time, float noteHolder, float pointerPosition)
         {
-            _socketFrameDataHolder.dataType = DataType.FrameData.ToString();
-            _socketFrameDataHolder.time = time;
-            _socketFrameDataHolder.noteHolder = noteHolder;
-            _socketFrameDataHolder.pointerPosition = pointerPosition;
-            var json = JsonConvert.SerializeObject(_socketFrameDataHolder);
+            var socketFrameData = new SocketFrameData()
+            {
+                time = time,
+                noteHolder = noteHolder,
+                pointerPosition = pointerPosition
+            };
+            var json = JsonConvert.SerializeObject(socketFrameData);
             SendToSocket(json);
         }
 
-        private SocketTootData _socketTootDataHolder = new SocketTootData();
         public void SendTootData(float time, float noteHolder, bool isTooting)
         {
-            _socketTootDataHolder.dataType = DataType.TootData.ToString();
-            _socketTootDataHolder.time = time;
-            _socketTootDataHolder.noteHolder = noteHolder;
-            _socketTootDataHolder.isTooting = isTooting;
-            var json = JsonConvert.SerializeObject(_socketTootDataHolder);
+            var socketTootData = new SocketTootData()
+            {
+                time = time,
+                noteHolder = noteHolder,
+                isTooting = isTooting
+            };
+            var json = JsonConvert.SerializeObject(socketTootData);
             SendToSocket(json);
         }
 
-        private SocketMessage _socketMessage;
 
         protected override void OnDataReceived(object sender, MessageEventArgs e)
         {
+            ISocketMessage socketMessage;
             if (e.IsText)
             {
                 try
                 {
-                    _socketMessage = JsonConvert.DeserializeObject<SocketMessage>(e.Data, _dataConverter);
+                    socketMessage = JsonConvert.DeserializeObject<ISocketMessage>(e.Data, _dataConverter);
                 }
                 catch (Exception)
                 {
                     Plugin.LogInfo("Couldn't parse to data: " + e.Data);
-                    _socketMessage = null;
                     return;
                 }
                 if (!IsHost)
                 {
-                    if (_socketMessage is SocketSongInfo info)
+                    if (socketMessage is SocketSongInfo info)
                         _receivedSongInfoQueue.Enqueue(info);
-                    else if (_socketMessage is SocketFrameData frame)
+                    else if (socketMessage is SocketFrameData frame)
                         _receivedFrameDataQueue.Enqueue(frame);
-                    else if (_socketMessage is SocketTootData toot)
+                    else if (socketMessage is SocketTootData toot)
                         _receivedTootDataQueue.Enqueue(toot);
-                    else if (_socketMessage is SocketUserState state)
+                    else if (socketMessage is SocketUserState state)
                         _receivedUserStateQueue.Enqueue(state);
-                    else if (_socketMessage is SocketNoteData note)
+                    else if (socketMessage is SocketNoteData note)
                         _receivedNoteDataQueue.Enqueue(note);
                 }
 
-                if (_socketMessage is SocketSpectatorInfo spec)
+                if (socketMessage is SocketSpectatorInfo spec)
                 {
                     Plugin.LogInfo(e.Data);
                     _receivedSpecInfoQueue.Enqueue(spec);
                 }
                 //if end up here, nothing was found
-                _socketMessage = null;
             }
         }
 
@@ -170,7 +170,7 @@ namespace TootTallySpectator
         protected override void OnWebSocketOpen(object sender, EventArgs e)
         {
             TootTallyNotifManager.DisplayNotif($"Connected to spectating server.");
-            OnWebSocketOpenCallback?.Invoke(this);                   
+            OnWebSocketOpenCallback?.Invoke(this);
             base.OnWebSocketOpen(sender, e);
         }
 
