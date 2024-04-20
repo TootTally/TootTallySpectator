@@ -101,6 +101,7 @@ namespace TootTallySpectator
                 sender.OnSocketTootDataReceived = SpectatingManagerPatches.OnTootDataReceived;
                 sender.OnSocketNoteDataReceived = SpectatingManagerPatches.OnNoteDataReceived;
                 TootTallyNotifManager.DisplayNotif($"Waiting for host to pick a song...");
+                TootTallyGlobalVariables.isSpectating = true;
             }
             else
             {
@@ -108,7 +109,6 @@ namespace TootTallySpectator
                 SpectatingManagerPatches.SendCurrentUserState();
             }
             sender.OnSocketSpecInfoReceived = SpectatingManagerPatches.OnSpectatorDataReceived;
-            TootTallyGlobalVariables.isSpectating = IsSpectating;
         }
 
         public static void RemoveSpectator(SpectatingSystem spectator)

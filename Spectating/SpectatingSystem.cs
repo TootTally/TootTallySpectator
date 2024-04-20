@@ -3,6 +3,7 @@ using System;
 using System.Collections.Concurrent;
 using System.EnterpriseServices;
 using TootTallyAccounts;
+using TootTallyCore.Utils.TootTallyGlobals;
 using TootTallyCore.Utils.TootTallyNotifs;
 using TootTallyWebsocketLibs;
 using WebSocketSharp;
@@ -174,10 +175,20 @@ namespace TootTallySpectator
             base.OnWebSocketOpen(sender, e);
         }
 
+        protected override void OnWebSocketClose(object sender, EventArgs e)
+        {
+            if (!IsHost)
+                TootTallyGlobalVariables.isSpectating = false;
+            base.OnWebSocketClose(sender, e);
+        }
+
         public void Disconnect()
         {
             if (!IsHost)
+            {
+                TootTallyGlobalVariables.isSpectating = false;
                 TootTallyNotifManager.DisplayNotif($"Disconnected from Spectating server.");
+            }
             if (IsConnected)
                 CloseWebsocket();
         }
