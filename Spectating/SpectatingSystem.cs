@@ -175,7 +175,7 @@ namespace TootTallySpectator
             base.OnWebSocketOpen(sender, e);
         }
 
-        protected override void OnWebSocketClose(object sender, EventArgs e)
+        protected override void OnWebSocketClose(object sender, CloseEventArgs e)
         {
             if (!IsHost)
                 TootTallyGlobalVariables.isSpectating = false;
