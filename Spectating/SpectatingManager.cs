@@ -656,7 +656,7 @@ namespace TootTallySpectator
                 _levelSelectControllerInstance.back_clicked = true;
                 _levelSelectControllerInstance.bgmus.Stop();
                 _levelSelectControllerInstance.clipPlayer.cancelCrossfades();
-                _levelSelectControllerInstance.doSfx(_levelSelectControllerInstance.sfx_musend);
+                _levelSelectControllerInstance.doSfx(_levelSelectControllerInstance.sfx_musend, 1f, 1f);
                 LeanTween.moveX(_levelSelectControllerInstance.playbtnobj, 640f, 0.6f).setEaseInQuart();
                 GlobalVariables.chosen_track = track.trackref;
                 GlobalVariables.chosen_track_data = TrackLookup.toTrackData(track);
