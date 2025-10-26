@@ -234,6 +234,7 @@ namespace TootTallySpectator
             public double noteScoreAverage { get; set; }
             public bool champMode { get; set; }
             public int multiplier { get; set; }
+            public int highestMultiplier { get; set; }
             public int totalScore { get; set; }
             public bool releasedButtonBetweenNotes { get; set; }
             public float health { get; set; }
@@ -765,7 +766,7 @@ namespace TootTallySpectator
             {
                 if (IsHosting)
                 {
-                    hostedSpectatingSystem.SendNoteData(__instance.rainbowcontroller.champmode, __instance.multiplier, __instance.currentnoteindex,
+                    hostedSpectatingSystem.SendNoteData(__instance.rainbowcontroller.champmode, __instance.multiplier, __instance.highestcombocounter, __instance.currentnoteindex,
                         __instance.notescoreaverage, __instance.released_button_between_notes, __instance.totalscore, __instance.currenthealth, __instance.highestcombo_level);
                 }
                 else if (IsSpectating)
@@ -846,13 +847,13 @@ namespace TootTallySpectator
 
             private static SocketSongInfo _lastHostSongInfo;
 
-            [HarmonyPatch(typeof(LevelSelectController), nameof(LevelSelectController.clickPlay))]
+            [HarmonyPatch(typeof(LoadController), nameof(LoadController.Start))]
             [HarmonyPostfix]
-            public static void OnLevelSelectControllerClickPlaySendToSocket(LevelSelectController __instance)
+            public static void OnLevelSelectControllerClickPlaySendToSocket()
             {
                 _lastHostSongInfo = new SocketSongInfo
                 {
-                    trackRef = __instance.alltrackslist[__instance.songindex].trackref,
+                    trackRef = GlobalVariables.chosen_track_data.trackref,
                     songID = 0,
                     gameSpeed = TootTallyGlobalVariables.gameSpeedMultiplier,
                     scrollSpeed = GlobalVariables.gamescrollspeed,

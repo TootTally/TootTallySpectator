@@ -55,10 +55,12 @@ namespace TootTallySpectator
             ConfigFile config = new ConfigFile(configPath + CONFIG_NAME, true);
             AllowSpectate = Config.Bind("General", "Allow Spectate", true, "Allow other players to spectate you while playing.");
             ShowSpectatorCount = Config.Bind("General", "Show Spectator Count", true, "Show the number of spectator while playing.");
+            EnableDebugLogs = Config.Bind("General", nameof(EnableDebugLogs), false, "Show extra debug information in logs.");
 
             settingPage = TootTallySettingsManager.AddNewPage("Spectator", "Spectator", 40f, new Color(0,0,0,0));
             settingPage.AddToggle("AllowSpectate", new Vector2(400, 50), "Allow Spectate", AllowSpectate, SpectatingManager.OnAllowHostConfigChange);
             settingPage.AddToggle("ShowSpectatorCount", new Vector2(400, 50), "Show Spectator Count", ShowSpectatorCount);
+            settingPage.AddToggle("EnableDebugLogs", new Vector2(400, 50), "Enable Debug Logs", EnableDebugLogs);
 
             TootTallySettings.Plugin.TryAddThunderstoreIconToPageButton(Instance.Info.Location, Name, settingPage);
 
@@ -78,5 +80,6 @@ namespace TootTallySpectator
 
         public ConfigEntry<bool> AllowSpectate { get; private set; }
         public ConfigEntry<bool> ShowSpectatorCount { get; private set; }
+        public ConfigEntry<bool> EnableDebugLogs { get; private set; }
     }
 }

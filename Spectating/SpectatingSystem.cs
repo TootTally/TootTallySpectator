@@ -64,12 +64,13 @@ namespace TootTallySpectator
             SendToSocket(json);
         }
 
-        public void SendNoteData(bool champMode, int multiplier, int noteID, double noteScoreAverage, bool releasedButtonBetweenNotes, int totalScore, float health, int highestCombo)
+        public void SendNoteData(bool champMode, int multiplier, int highestMultiplier, int noteID, double noteScoreAverage, bool releasedButtonBetweenNotes, int totalScore, float health, int highestCombo)
         {
             var socketNoteData = new SocketNoteData()
             {
                 champMode = champMode,
                 multiplier = multiplier,
+                highestMultiplier = highestMultiplier,
                 noteID = noteID,
                 noteScoreAverage = noteScoreAverage,
                 releasedButtonBetweenNotes = releasedButtonBetweenNotes,
@@ -111,6 +112,8 @@ namespace TootTallySpectator
             ISocketMessage socketMessage;
             if (e.IsText)
             {
+                if (Plugin.Instance.EnableDebugLogs.Value)
+                    Plugin.LogInfo($"Data Received: {e.Data}");
                 try
                 {
                     socketMessage = JsonConvert.DeserializeObject<ISocketMessage>(e.Data, _dataConverter);
