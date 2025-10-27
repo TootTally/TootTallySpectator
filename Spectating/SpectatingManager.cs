@@ -760,14 +760,20 @@ namespace TootTallySpectator
                     SpectatingOverlay.SetCurrentUserState(UserState.Quitting);
             }
 
+            private static SocketNoteData _noteDataToSend;
+
             [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
             [HarmonyPrefix]
             public static void OnGetScoreAveragePrefixSetCurrentNote(GameController __instance)
             {
                 if (IsHosting)
                 {
-                    hostedSpectatingSystem.SendNoteData(__instance.rainbowcontroller.champmode, __instance.multiplier, __instance.highestcombocounter, __instance.currentnoteindex,
-                        __instance.notescoreaverage, __instance.released_button_between_notes, __instance.totalscore, __instance.currenthealth, __instance.highestcombo_level);
+                    _noteDataToSend = new SocketNoteData()
+                    {
+                        noteID = __instance.currentnoteindex,
+                        noteScoreAverage = __instance.notescoreaverage,
+                        releasedButtonBetweenNotes = __instance.released_button_between_notes
+                    };
                 }
                 else if (IsSpectating)
                 {
@@ -786,6 +792,22 @@ namespace TootTallySpectator
                         __instance.highestcombo_level = _currentNoteData.highestCombo;
                         _currentNoteData.noteID = -1;
                     }
+                }
+            }
+
+            [HarmonyPatch(typeof(GameController), nameof(GameController.getScoreAverage))]
+            [HarmonyPostfix]
+            public static void OnGetScoreAveragePostfixSendNoteData(GameController __instance)
+            {
+                if (IsHosting)
+                {
+                    _noteDataToSend.champMode = __instance.rainbowcontroller.champmode;
+                    _noteDataToSend.multiplier = __instance.multiplier;
+                    _noteDataToSend.totalScore = __instance.totalscore;
+                    _noteDataToSend.health = __instance.currenthealth;
+                    _noteDataToSend.highestMultiplier = __instance.highestcombocounter;
+                    _noteDataToSend.highestCombo = __instance.highestcombo_level;
+                    hostedSpectatingSystem.SendNoteData(_noteDataToSend);
                 }
             }
 

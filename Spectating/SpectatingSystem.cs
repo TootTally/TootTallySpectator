@@ -82,6 +82,12 @@ namespace TootTallySpectator
             SendToSocket(json);
         }
 
+        public void SendNoteData(SocketNoteData data)
+        {
+            var json = JsonConvert.SerializeObject(data);
+            SendToSocket(json);
+        }
+
         public void SendFrameData(float time, float noteHolder, float pointerPosition)
         {
             var socketFrameData = new SocketFrameData()
